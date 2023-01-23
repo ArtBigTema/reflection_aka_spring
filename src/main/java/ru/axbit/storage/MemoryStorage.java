@@ -26,7 +26,7 @@ public class MemoryStorage implements Storage {
 
     @Override
     public List<AbstractEntity> findAll() {
-    throw new RuntimeException("");
+        throw new RuntimeException("");
     }
 
     @Override

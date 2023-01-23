@@ -1,6 +1,5 @@
 package ru.axbit.model;
 
-import lombok.NoArgsConstructor;
 import ru.axbit.annotation.Entity;
 import ru.axbit.utils.Constant;
 

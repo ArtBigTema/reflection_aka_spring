@@ -1,8 +1,7 @@
 package ru.axbit.model;
 
-import lombok.NoArgsConstructor;
-import ru.axbit.annotation.Entity;
 import lombok.Data;
+import ru.axbit.annotation.Entity;
 
 import javax.annotation.Nonnull;
 import java.util.List;

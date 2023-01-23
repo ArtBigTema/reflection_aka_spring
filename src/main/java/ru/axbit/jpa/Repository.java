@@ -18,7 +18,7 @@ public interface Repository<T, ID> {
 
     T create(T object);
 
-     Class<T> getClazz();
+    Class<T> getClazz();
 
     default List<AbstractEntity> findAll(String clazz) {
         return Collections.emptyList();

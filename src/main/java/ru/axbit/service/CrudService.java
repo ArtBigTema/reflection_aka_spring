@@ -3,7 +3,6 @@ package ru.axbit.service;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.reflect.ConstructorUtils;
 import org.jeasy.random.EasyRandom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.bind.Name;
@@ -53,7 +52,7 @@ public class CrudService {
 
     @SneakyThrows
     @Commandable(value = DELETE, name = "объект")
-    public <T extends AbstractEntity> void delete(@Name("Имя класса") String className, @Name("Ид")  String id) {
+    public <T extends AbstractEntity> void delete(@Name("Имя класса") String className, @Name("Ид") String id) {
         Repository<AbstractEntity, ?> repository = getRepository(className);
         repository.delete(findById(className, id));
     }

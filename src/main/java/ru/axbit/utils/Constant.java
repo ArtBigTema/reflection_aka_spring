@@ -1,7 +1,7 @@
 package ru.axbit.utils;
 
 public class Constant {
-    public  enum Colour {
+    public enum Colour {
         RED, GREEN, BLUE
     }
 

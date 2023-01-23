@@ -38,27 +38,27 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 
+import static ru.axbit.utils.Utils.getService;
+
 @RequiredArgsConstructor
 public class Application {
     private final CrudService crudService;
 
     public static void main(String[] args) throws Exception {
-//        Reflection.newProxy();/
         String packageName = Application.class.getPackageName();
         Reflections reflections = new Reflections(packageName,
                 new SubTypesScanner(false), new TypeAnnotationsScanner());
 
-        System.out.println(reflections.getAllTypes());
+        System.out.println(reflections.getAllTypes()); // печать всего что есть
 
         Set<Class<?>> serviceClass = reflections.getTypesAnnotatedWith(Service.class);
 
-        Properties prop = new Properties();
+        Properties prop = new Properties(); // вытаскиваем место хранения
         prop.load(Utils.class.getClassLoader().getResourceAsStream("application.properties"));
         String storage = prop.getProperty("storage");
 
-
         List<Object> services = new LinkedList<>();
-        for (Class<?> clazz : serviceClass) {
+        for (Class<?> clazz : serviceClass) { // Создаем экземпляры сервисов
             services.add(ConstructorUtils.invokeConstructor(clazz));
         }
 
@@ -71,11 +71,11 @@ public class Application {
             String repository = StringUtils.substringBefore(repo.getSimpleName(), "Repository");
             JpaDao clone = Utils.copy(dao);
             clone.setStorage(store);
-            clone.setClazz(repository);
+            clone.setClazz(repository); // Создаем прокси для всех репозиториев
             repositories.put(repository, Reflection.newProxy(repo, clone));
         }
 
-        for (Object service : services) {
+        for (Object service : services) { // инжектим все бины в сервисы
             Field[] fields = FieldUtils.getFieldsWithAnnotation(service.getClass(), Autowired.class);
             for (Field field : fields) {
                 if (TypeUtils.isCollection(field.getType())) {
@@ -93,29 +93,24 @@ public class Application {
 
         System.out.println("all configured");
 
-        CrudService crud = getService("crud", services, CrudService.class);
-        Set<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(Entity.class);
+        // Вытаскиваем все сущности с которыми можем работать
         Map<String, Class<?>> objects = new HashMap<>();
+        Set<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(Entity.class);
         for (Class<?> aClass : typesAnnotatedWith) {
             objects.put(aClass.getAnnotation(Entity.class).value(), aClass);
         }
 
+        // вытаскиваем главный сервис для работы с сущностями
+        CrudService crud = getService("crud", services, CrudService.class);
         new Application(crud).startGui(objects);
-    }
-
-    private static <T> T getService(String name, List<Object> services, Class<T> serviceClass) {
-        return services.stream()
-                .filter(o -> o.getClass().isAnnotationPresent(Service.class))
-                .filter(o -> name.equals(o.getClass().getAnnotation(Service.class).value()))
-                .findFirst().map(serviceClass::cast).orElseThrow();
     }
 
     private void startGui(Map<String, Class<?>> entities) throws Exception {
         Scanner scanner = new Scanner(System.in);
 
+        // Создаем отображение команд типа Создай объект чего-либо
+        List<String> whats = new LinkedList<>(); // список объектов
         Map<Pair<String, String>, Method> methodMap = new HashMap<>();
-        List<String> whats = new LinkedList<>();
-
         for (Method method : crudService.getClass().getDeclaredMethods()) {
             for (Annotation annotation : method.getAnnotations()) {
                 if (annotation instanceof Commandable c) {
@@ -125,17 +120,20 @@ public class Application {
             }
         }
 
-        while (true) {
+        while (true) { // пока есть консольные команды
             String command = scanner.nextLine();
             String[] microCommand = StringUtils.split(command, " ");
 
-            String action = microCommand[0];
-            String what = microCommand[1];
+            String action = microCommand[0]; // пусть первое это действие
+            String what = microCommand[1]; // второе это объект (или версия или всё)
+            // какие-либо аргументы, типа номера (индекса)
             String[] args = ArrayUtils.subarray(microCommand, 2, microCommand.length);
 
+            // корректируем через jaccard
             String correctAction = Utils.similar(action, Commands.Command.values(), Commands.Command::getTitle);
             String correctWhat = Utils.similar(what, whats);
 
+            // определяем целевой метод
             Method method = methodMap.get(Pair.of(correctAction, correctWhat));
             if (Objects.isNull(method)) {
                 System.err.println("Метод не найден, попробуйте ещё раз");
@@ -154,8 +152,9 @@ public class Application {
                 args[0] = entities.get(similar).getSimpleName();
             }
 
+            // выполняем действие с консоли с аргументами
             Object result = method.invoke(crudService, args);
-            System.out.println(result);
+            System.out.println(result); // печатаем результат выполнения
         }
 
     }

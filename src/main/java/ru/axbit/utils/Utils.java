@@ -11,6 +11,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.data.util.CastUtils;
+import org.springframework.stereotype.Service;
 
 import java.beans.PropertyDescriptor;
 import java.io.InputStream;
@@ -25,6 +26,13 @@ import java.util.function.Function;
 
 @UtilityClass
 public class Utils {
+
+    public static <T> T getService(String name, List<Object> services, Class<T> serviceClass) {
+        return services.stream()
+                .filter(o -> o.getClass().isAnnotationPresent(Service.class))
+                .filter(o -> name.equals(o.getClass().getAnnotation(Service.class).value()))
+                .findFirst().map(serviceClass::cast).orElseThrow();
+    }
 
     @SneakyThrows
     public static <T> T copy(T src) {
